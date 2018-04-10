@@ -1,9 +1,11 @@
 # Sql Like To Regex
 Simple package to convert (my)sql LIKE syntax to regex (preg)
 
+[![Build Status](https://travis-ci.org/menthol/sqlLikeToRegex.svg?branch=master)](https://travis-ci.org/menthol/sqlLikeToRegex)
+
 ## Install
 ```bash
-TODO: composer require menthol/sql-like-to-regex
+composer require menthol/sql-like-to-regex
 ```
 
 ## Usage
