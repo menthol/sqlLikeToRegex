@@ -1,6 +1,6 @@
 {
     "name": "menthol/sql-like-to-regex",
-    "description": "Demo",
+    "description": "Simple package to convert (my)sql LIKE syntax to regex (preg)",
     "license": "MIT",
     "authors": [
         {
