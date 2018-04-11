@@ -60,11 +60,29 @@ class SqlLikeToRegexTest extends TestCase
         $patterns = [
             '%' => '/^.*$/',
             '_' => '/^.$/',
-            '\%' => '/^\\\\%$/',
-            '\_' => '/^\\\\_$/',
         ];
         foreach ($patterns as $pattern => $expected) {
             $this->assertEquals($expected, SqlLikeToRegex::convert($pattern));
+        }
+    }
+
+    /** @test */
+    public function it_should_accept_escaping_percent_sign_and_underscore()
+    {
+        $patterns = [
+            'xx\xx\\\\xx\\\\\\\\xx' => ['\\', '/^xxxx\\\\xx\\\\\\\\xx$/'],
+            '\%' => ['\\', '/^%$/'],
+            '\_' => ['\\', '/^_$/'],
+            '#%' => ['#', '/^%$/'],
+            '#_' => ['#', '/^_$/'],
+            '\\\\%' => ['\\', '/^\\\\.*$/'],
+            '\\\\_' => ['\\', '/^\\\\.$/'],
+            '##%' => ['#', '/^#.*$/'],
+            '##_' => ['#', '/^#.$/'],
+        ];
+        foreach ($patterns as $pattern => $options) {
+            list ($escape, $expected) = $options;
+            $this->assertEquals($expected, SqlLikeToRegex::convert($pattern, '/', $escape));
         }
     }
 }
