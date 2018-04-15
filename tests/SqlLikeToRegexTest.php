@@ -7,14 +7,40 @@ use PHPUnit\Framework\TestCase;
 
 class SqlLikeToRegexTest extends TestCase
 {
+    /** @var SqlLikeToRegex */
+    private $instance;
+
+    public function setUp()
+    {
+        $this->instance = (new SqlLikeToRegex())->setCaseSensitive();
+    }
+
+    /** @test */
+    public function it_should_test_a_subject()
+    {
+        $this->assertTrue($this->instance->setPattern('te_t')->test('test'));
+        $this->assertFalse($this->instance->setPattern('te_t')->test('bar'));
+    }
+
     /** @test */
     public function it_do_not_touch_pattern_without_special_chars()
     {
         $patterns = ['foo', 'bar', 123, '', true, null];
         foreach ($patterns as $pattern) {
-            $this->assertEquals("/^{$pattern}$/", SqlLikeToRegex::convert($pattern));
+            $this->assertEquals("/^{$pattern}$/", $this->instance->setPattern($pattern)->getRegex());
         }
     }
+
+    /** @test */
+    public function it_should_add_case_sensitive_option_to_pattern()
+    {
+        $this->instance->setCaseInsensitive();
+        $patterns = ['foo', 'bar', 123, '', true, null];
+        foreach ($patterns as $pattern) {
+            $this->assertEquals("/^{$pattern}$/i", $this->instance->setPattern($pattern)->getRegex());
+        }
+    }
+
 
     /** @test */
     public function it_should_protect_delimiter_char()
@@ -24,15 +50,16 @@ class SqlLikeToRegexTest extends TestCase
             '/delimiters with option/s' => '/^\/delimiters with option\/s$/',
         ];
         foreach ($patterns as $pattern => $expected) {
-            $this->assertEquals($expected, SqlLikeToRegex::convert($pattern));
+            $this->assertEquals($expected, $this->instance->setPattern($pattern)->getRegex());
         }
 
         $patterns = [
             '+delimiters+' => '+^\+delimiters\+$+',
             '+delimiters with option+s' => '+^\+delimiters with option\+s$+',
         ];
+        $this->instance->setDelimiter('+');
         foreach ($patterns as $pattern => $expected) {
-            $this->assertEquals($expected, SqlLikeToRegex::convert($pattern, '+'));
+            $this->assertEquals($expected, $this->instance->setPattern($pattern)->getRegex());
         }
 
         $patterns = [
@@ -43,14 +70,15 @@ class SqlLikeToRegexTest extends TestCase
         ];
         foreach ($patterns as $pattern => $options) {
             list ($delimiter, $expected) = $options;
-            $this->assertEquals($expected, SqlLikeToRegex::convert($pattern, $delimiter));
+            $this->instance->setDelimiter($delimiter);
+            $this->assertEquals($expected, $this->instance->setPattern($pattern)->getRegex());
         }
     }
 
     /** @test */
     public function it_should_protect_meta_characters()
     {
-        $converted = SqlLikeToRegex::convert('\^$.[]|()?*+{}');
+        $converted = $this->instance->setPattern('\^$.[]|()?*+{}')->getRegex();
         $this->assertEquals('/^\\\\\^\\$\\.\\[\\]\\|\\(\\)\\?\\*\\+\\{\\}$/', $converted);
     }
 
@@ -62,7 +90,7 @@ class SqlLikeToRegexTest extends TestCase
             '_' => '/^.$/',
         ];
         foreach ($patterns as $pattern => $expected) {
-            $this->assertEquals($expected, SqlLikeToRegex::convert($pattern));
+            $this->assertEquals($expected, $this->instance->setPattern($pattern)->getRegex());
         }
     }
 
@@ -82,7 +110,8 @@ class SqlLikeToRegexTest extends TestCase
         ];
         foreach ($patterns as $pattern => $options) {
             list ($escape, $expected) = $options;
-            $this->assertEquals($expected, SqlLikeToRegex::convert($pattern, '/', $escape));
+            $this->instance->setEscape($escape);
+            $this->assertEquals($expected, $this->instance->setPattern($pattern)->getRegex());
         }
     }
 }

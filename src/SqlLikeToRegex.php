@@ -8,39 +8,61 @@ namespace Menthol\SqlLikeToRegex;
  */
 class SqlLikeToRegex
 {
-    private static $pairDelimiters = [
+    /** @var array */
+    private $pairDelimiters = [
         '(' => ')',
         '{' => '}',
         '[' => ']',
         '<' => '>'
     ];
 
-    public static function convert($pattern, $delimiter = '/', $escape = null)
-    {
-        $endDelimiter = self::getEndDelimiter($delimiter);
-        $pattern = self::convertLikeCharsToRegex($pattern, $escape, $delimiter);
-        return "{$delimiter}^{$pattern}\${$endDelimiter}";
-    }
+    /** @var string */
+    private $delimiter = '/';
+
+    /** @var string */
+    private $endDelimiter = '/';
+
+    /** @var string|null */
+    private $escape;
+
+    /** @var bool */
+    private $isCaseSensitive = false;
+
+    /** @var string */
+    private $pattern;
+
+    /** @var string|null */
+    private $regex;
+
 
     /**
-     * @param $delimiter
-     * @return mixed
+     * @param $subject
+     * @return bool
      */
-    protected static function getEndDelimiter($delimiter)
+    public function test($subject)
     {
-        return isset(self::$pairDelimiters[$delimiter]) ? self::$pairDelimiters[$delimiter] : $delimiter;
+        return !! preg_match($this->getRegex(), $subject);
     }
 
     /**
      * @param $pattern
-     * @param $escape
-     * @param $delimiter
+     * @return string
+     */
+    private function convert($pattern)
+    {
+        $pattern = $this->convertLikeCharsToRegex($pattern);
+        $options = ($this->isCaseSensitive ? '' : 'i');
+        return "{$this->delimiter}^{$pattern}\${$this->endDelimiter}{$options}";
+    }
+
+    /**
+     * @param $pattern
      * @return null|string
      */
-    protected static function convertLikeCharsToRegex($pattern, $escape, $delimiter)
+    protected function convertLikeCharsToRegex($pattern)
     {
-        if (! isset($escape)) {
-            $quotedPattern = preg_quote($pattern, $delimiter);
+        if (!isset($this->escape)) {
+            $quotedPattern = preg_quote($pattern, $this->delimiter);
             return str_replace(['%', '_'], ['.*', '.'], $quotedPattern);
         }
 
@@ -48,22 +70,123 @@ class SqlLikeToRegex
 
         $pattern = '';
         while ($char = array_shift($splitPattern)) {
-            if ($char == $escape) {
+            if ($char == $this->escape) {
                 $char = array_shift($splitPattern);
-                $pattern .= preg_quote($char, $delimiter);
-            }
-            elseif ($char == '%') {
+                $pattern .= preg_quote($char, $this->delimiter);
+            } elseif ($char == '%') {
                 $pattern .= '.*';
-            }
-            elseif ($char == '_') {
+            } elseif ($char == '_') {
                 $pattern .= '.';
-            }
-            else {
-                $pattern .= preg_quote($char, $delimiter);
+            } else {
+                $pattern .= preg_quote($char, $this->delimiter);
             }
         }
 
         return $pattern;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDelimiter()
+    {
+        return $this->delimiter;
+    }
+
+    /**
+     * @param $delimiter
+     * @return mixed
+     */
+    public function getEndDelimiter($delimiter)
+    {
+        return isset($this->pairDelimiters[$delimiter]) ? $this->pairDelimiters[$delimiter] : $delimiter;
+    }
+
+    /**
+     * @param string $delimiter
+     * @return SqlLikeToRegex
+     */
+    public function setDelimiter($delimiter)
+    {
+        $this->delimiter = $delimiter;
+        $this->endDelimiter = $this->getEndDelimiter($delimiter);
+        $this->regex = null;
+
+        return $this;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getEscape()
+    {
+        return $this->escape;
+    }
+
+    /**
+     * @param null|string $escape
+     * @return SqlLikeToRegex
+     */
+    public function setEscape($escape)
+    {
+        $this->escape = $escape;
+        $this->regex = null;
+
+        return $this;
+    }
+
+    /**
+     * @return SqlLikeToRegex
+     */
+    public function setCaseSensitive()
+    {
+        $this->isCaseSensitive = true;
+        $this->regex = null;
+
+        return $this;
+    }
+
+    /**
+     * @return SqlLikeToRegex
+     */
+    public function setCaseInsensitive()
+    {
+        $this->isCaseSensitive = false;
+        $this->regex = null;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPattern()
+    {
+        return $this->pattern;
+    }
+
+    /**
+     * @param string $pattern
+     * @return SqlLikeToRegex
+     */
+    public function setPattern($pattern)
+    {
+        $this->pattern = $pattern;
+        $this->regex = null;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRegex()
+    {
+        if (!isset($this->regex)) {
+            $this->regex = $this->convert($this->pattern);
+        }
+
+        return $this->regex;
     }
 }
 
