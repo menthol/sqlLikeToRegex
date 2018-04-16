@@ -13,14 +13,41 @@ composer require menthol/sql-like-to-regex
 ```php
 use Menthol\SqlLikeToRegex\SqlLikeToRegex;
 
-print SqlLikeToRegex::convert('foo%');
-// => /^foo.*$/
+print (new SqlLikeToRegex)
+        ->setPattern('foo%')
+        ->toRegex();
+// => /^foo.*$/i
 
-print SqlLikeToRegex::convert('_b_a_r_', '#');
-// => #^.b.a.r.$#
+var_dump((new SqlLikeToRegex)
+    ->setPattern('foo%')
+    ->test('FooBar')
+);
+// => bool(true)
 
-print SqlLikeToRegex::convert('/.*[baz]{5}^/', '<');
-// => <^/\.\*\[baz\]\{5\}\^/$>
+var_dump((new SqlLikeToRegex)
+    ->setPattern('foo%')
+    ->test('Baz')
+);
+// => bool(false)
+
+print (new SqlLikeToRegex)
+        ->setPattern('B_o#(F%o##Moo#%')
+        ->setEscape('#')
+        ->setCaseSensitive()
+        ->toRegex();
+// => /^B.o\(F.*o#Moo%$/
+
+print (new SqlLikeToRegex)
+        ->setPattern('_b_a_r_')
+        ->setDelimiter('#')
+        ->toRegex();
+// => #^.b.a.r.$#i
+
+print (new SqlLikeToRegex)
+        ->setPattern('/.*[baz]{5}^/')
+        ->setDelimiter('<')
+        ->toRegex();
+// => <^/\.\*\[baz\]\{5\}\^/$>i
 ```
 
 ### License
